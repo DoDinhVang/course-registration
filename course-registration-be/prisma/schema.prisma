@@ -33,10 +33,36 @@ model RefreshToken {
 }
 
 model Course {
-  id        Int      @id @default(autoincrement())
-  code      String   @unique @db.VarChar(20)
-  name      String   @db.VarChar(150)
-  createdAt DateTime @default(now()) @map("created_at")
+  id              Int              @id @default(autoincrement())
+  code            String           @unique @db.VarChar(20)
+  name            String           @db.VarChar(150)
+  createdAt       DateTime         @default(now()) @map("created_at")
+  courseSemesters CourseSemester[]
 
   @@map("courses")
+}
+
+model Semester {
+  id              Int              @id @default(autoincrement())
+  code            String           @unique @db.VarChar(20) // vd: "2026-1"
+  name            String           @db.VarChar(100) // vd: "Học kỳ 1 - Năm học 2026-2027"
+  startDate       DateTime         @map("start_date")
+  endDate         DateTime         @map("end_date")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  courseSemesters CourseSemester[]
+
+  @@map("semesters")
+}
+
+model CourseSemester {
+  id         Int      @id @default(autoincrement())
+  courseId   Int      @map("course_id")
+  semesterId Int      @map("semester_id")
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  semester   Semester @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([courseId], map: "course_semesters_course_id_fkey")
+  @@index([semesterId], map: "course_semesters_semester_id_fkey")
+  @@map("course_semesters")
 }
