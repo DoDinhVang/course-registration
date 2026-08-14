@@ -31,3 +31,12 @@ model RefreshToken {
   @@index([studentId], map: "refresh_tokens_student_id_fkey")
   @@map("refresh_tokens")
 }
+
+model Course {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique @db.VarChar(20)
+  name      String   @db.VarChar(150)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("courses")
+}
