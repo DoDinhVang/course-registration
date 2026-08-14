@@ -1,14 +1,33 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
+  output   = "../src/common/generated/prisma"
 }
 
 datasource db {
   provider = "mysql"
-  ur= env("DATABASE_URL")
+}
+
+model Student {
+  id            Int            @id @default(autoincrement())
+  studentCode   String         @unique @map("student_code") @db.VarChar(20)
+  name          String         @db.VarChar(150)
+  email         String         @unique @db.VarChar(150)
+  password      String
+  status        String         @default("ACTIVE") @db.VarChar(20)
+  createdAt     DateTime       @default(now()) @map("created_at")
+  refreshTokens RefreshToken[]
+
+  @@map("students")
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique @db.VarChar(500)
+  studentId Int      @map("student_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  expiresAt DateTime @map("expires_at")
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId], map: "refresh_tokens_student_id_fkey")
+  @@map("refresh_tokens")
 }
