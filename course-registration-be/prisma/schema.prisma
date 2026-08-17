@@ -46,8 +46,8 @@ model Semester {
   id              Int              @id @default(autoincrement())
   code            String           @unique @db.VarChar(20) // vd: "2026-1"
   name            String           @db.VarChar(100) // vd: "Học kỳ 1 - Năm học 2026-2027"
-  startDate       DateTime         @map("start_date")
-  endDate         DateTime         @map("end_date")
+  startDate       DateTime?         @map("start_date") 
+  endDate         DateTime ?        @map("end_date")
   createdAt       DateTime         @default(now()) @map("created_at")
   courseSemesters CourseSemester[]
 
