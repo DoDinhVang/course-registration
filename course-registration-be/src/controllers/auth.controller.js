@@ -6,9 +6,9 @@ import {
 } from "../common/schemas/students.schema.js";
 
 const COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "strict",
+  httpOnly: true, //Cookie không thể đọc được bằng JavaScript phía client
+  secure: process.env.NODE_ENV === "production", //Chỉ gửi cookie qua kết nối HTTPS.
+  sameSite: "strict", //Cookie chỉ được gửi khi request xuất phát từ cùng domain
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 

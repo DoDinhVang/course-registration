@@ -1,4 +1,5 @@
 import prisma from "../common/helpers/prisma.js";
+import { AppError } from "../common/middlware/error.middleware.js";
 
 export const getSemesterList = async () => {
   const semesterList = await prisma.semester.findMany();
@@ -15,13 +16,13 @@ export const createSemester = async (data) => {
 };
 
 export const getCoursesBySemesterId = async (semesterId) => {
-  console.log("semesterId", semesterId);
   return await prisma.courseSemester.findMany({
     where: {
       semesterId: semesterId,
     },
     include: {
       course: true,
+      semester: true,
     },
   });
 };
@@ -35,7 +36,7 @@ export const bulkAddCoursesToSemester = async (semesterId, courseIds) => {
     },
   });
 
-  if (!semester) throw new ApiError(404, "Semester không tồn tại");
+  if (!semester) throw new AppError("Semester không tồn tại", 404);
 
   const existingCourses = await prisma.course.findMany({
     where: { id: { in: courseIds } },
@@ -49,9 +50,9 @@ export const bulkAddCoursesToSemester = async (semesterId, courseIds) => {
   );
 
   if (invalidCourseIds.length > 0) {
-    throw new ApiError(
-      400,
+    throw new AppError(
       `Các courseId không tồn tại: ${invalidCourseIds.join(", ")}`,
+      400,
     );
   }
 

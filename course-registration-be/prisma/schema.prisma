@@ -16,6 +16,7 @@ model Student {
   status        String         @default("ACTIVE") @db.VarChar(20)
   createdAt     DateTime       @default(now()) @map("created_at")
   refreshTokens RefreshToken[]
+  registrations Registration[]
 
   @@map("students")
 }
@@ -46,8 +47,8 @@ model Semester {
   id              Int              @id @default(autoincrement())
   code            String           @unique @db.VarChar(20) // vd: "2026-1"
   name            String           @db.VarChar(100) // vd: "Học kỳ 1 - Năm học 2026-2027"
-  startDate       DateTime?         @map("start_date") 
-  endDate         DateTime ?        @map("end_date")
+  startDate       DateTime?        @map("start_date")
+  endDate         DateTime?        @map("end_date")
   createdAt       DateTime         @default(now()) @map("created_at")
   courseSemesters CourseSemester[]
 
@@ -55,14 +56,44 @@ model Semester {
 }
 
 model CourseSemester {
-  id         Int      @id @default(autoincrement())
-  courseId   Int      @map("course_id")
-  semesterId Int      @map("semester_id")
-  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  semester   Semester @relation(fields: [semesterId], references: [id], onDelete: Cascade)
-  createdAt  DateTime @default(now()) @map("created_at")
+  id              Int            @id @default(autoincrement())
+  courseId        Int            @map("course_id")
+  semesterId      Int            @map("semester_id")
+  capacity        Int            @default(60)
+  registeredCount Int            @default(0) @map("registered_count") // số lượng đã đăng ký thành công (đồng bộ định kỳ từ Redis)
+  registrations   Registration[]
+  course          Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  semester        Semester       @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  createdAt       DateTime       @default(now()) @map("created_at")
 
+  @@unique([courseId, semesterId], map: "course_semesters_course_id_semester_id_unique")
   @@index([courseId], map: "course_semesters_course_id_fkey")
   @@index([semesterId], map: "course_semesters_semester_id_fkey")
   @@map("course_semesters")
+}
+
+// Bảng đăng ký học phần của sinh viên
+model Registration {
+  id               Int                @id @default(autoincrement())
+  studentId        Int                @map("student_id")
+  courseSemesterId Int                @map("course_semester_id")
+  status           RegistrationStatus @default(PENDING)
+  registeredAt     DateTime           @default(now()) @map("registered_at")
+  cancelledAt      DateTime?          @map("cancelled_at")
+  student        Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  courseSemester CourseSemester @relation(fields: [courseSemesterId], references: [id], onDelete: Cascade)
+  createdAt       DateTime       @default(now()) @map("created_at")
+  // 1 sinh viên chỉ đăng ký 1 lớp học phần 1 lần (tránh trùng)
+  @@unique([studentId, courseSemesterId], map: "registrations_student_id_course_semester_id_unique")
+  @@index([studentId], map: "registrations_student_id_fkey")
+  @@index([courseSemesterId], map: "registrations_course_semester_id_fkey")
+  @@map("registrations")
+}
+
+enum RegistrationStatus {
+  PENDING // đang xử lý (vừa vào queue, chưa ghi nhận chính thức)
+  CONFIRMED // đăng ký thành công, còn chỗ
+  WAITLISTED // hết chỗ, xếp hàng chờ
+  CANCELLED // sinh viên huỷ đăng ký
+  FAILED // đăng ký thất bại (hết hạn, lỗi...)
 }
