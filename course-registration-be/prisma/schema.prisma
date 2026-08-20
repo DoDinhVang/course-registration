@@ -60,7 +60,7 @@ model CourseSemester {
   courseId        Int            @map("course_id")
   semesterId      Int            @map("semester_id")
   capacity        Int            @default(60)
-  registeredCount Int            @default(0) @map("registered_count") // số lượng đã đăng ký thành công (cập nhật tức thời, nguyên tử trong transaction ở register.service.js)
+  registeredCount Int            @default(0) @map("registered_count") // số lượng đã đăng ký thành công (có nên đồng bộ từ redis)
   registrations   Registration[]
   course          Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
   semester        Semester       @relation(fields: [semesterId], references: [id], onDelete: Cascade)
