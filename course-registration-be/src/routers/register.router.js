@@ -7,6 +7,7 @@ router.use(protect);
 
 router.post("/", registerController.register);
 router.get("/", registerController.getMyRegistrations);
+router.get("/export", registerController.exportRegistrations);
 router.delete("/:id", registerController.cancel);
 
 export default router;

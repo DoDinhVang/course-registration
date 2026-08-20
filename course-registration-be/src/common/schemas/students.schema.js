@@ -1,10 +1,7 @@
 import { z } from "zod";
 
 export const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, "Mã sinh viên hoặc Email là bắt buộc")
-    .trim(),
+  email: z.string().min(1, "Mã sinh viên hoặc Email là bắt buộc").trim(),
   password: z.string().min(1, "Mật khẩu là bắt buộc"),
 });
 export const registerSchema = z.object({
