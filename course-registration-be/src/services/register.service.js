@@ -13,6 +13,7 @@ const runInTransaction = async (fn) => {
   let lastError;
   for (let attempt = 0; attempt < MAX_TX_RETRIES; attempt++) {
     try {
+
       return await prisma.$transaction(fn, { isolationLevel: "ReadCommitted" });
     } catch (error) {
       if (isRetryableTxError(error) && attempt < MAX_TX_RETRIES - 1) {
@@ -27,9 +28,9 @@ const runInTransaction = async (fn) => {
   throw lastError;
 };
 
-// Đăng ký 1 lớp học phần (courseSemester) cho 1 sinh viên.
 const registerSingleCourse = async (studentId, courseSemesterId) => {
   return runInTransaction(async (tx) => {
+
     const existingRows = await tx.$queryRaw`
       SELECT id, status
       FROM registrations
@@ -41,13 +42,13 @@ const registerSingleCourse = async (studentId, courseSemesterId) => {
     if (existing && existing.status === "CONFIRMED") {
       throw new AppError("Bạn đã đăng ký học phần này rồi.", 409);
     }
-    
     const seatReserved = await tx.$executeRaw`
       UPDATE course_semesters
       SET registered_count = registered_count + 1
       WHERE id = ${courseSemesterId} AND registered_count < capacity
     `;
     if (seatReserved === 0) {
+
       const courseSemester = await tx.courseSemester.findUnique({
         where: { id: courseSemesterId },
         select: { id: true },
@@ -71,6 +72,7 @@ const registerSingleCourse = async (studentId, courseSemesterId) => {
         });
       }
     } catch (error) {
+
       if (error.code === "P2002") {
         throw new AppError("Bạn đã đăng ký học phần này rồi.", 409);
       }
@@ -83,7 +85,9 @@ const registerSingleCourse = async (studentId, courseSemesterId) => {
 
 export const register = async (studentId, courseSemesterIds) => {
   const uniqueIds = [...new Set(courseSemesterIds)];
+
   const results = [];
+
   for (const courseSemesterId of uniqueIds) {
     try {
       const registration = await registerSingleCourse(studentId, courseSemesterId);
@@ -129,7 +133,6 @@ export const cancelRegistration = async (studentId, registrationId) => {
       where: { id: registrationId },
       data: { status: "CANCELLED", cancelledAt: new Date() },
     });
-
     
     await tx.courseSemester.updateMany({
       where: { id: Number(existing.course_semester_id), registeredCount: { gt: 0 } },

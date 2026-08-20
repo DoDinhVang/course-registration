@@ -1,17 +1,30 @@
 import * as registerService from "../services/register.service.js";
 import { registerCourseSchema } from "../common/schemas/register.schema.js";
 import { AppError } from "../common/middlware/error.middleware.js";
+import { buildRegistrationsDocx } from "../common/helpers/registration-export.helper.js";
 
-const VALID_STATUSES = ["PENDING", "CONFIRMED", "WAITLISTED", "CANCELLED", "FAILED"];
+const VALID_STATUSES = [
+  "PENDING",
+  "CONFIRMED",
+  "WAITLISTED",
+  "CANCELLED",
+  "FAILED",
+];
 
 export const register = async (req, res, next) => {
   try {
     const { data, success, error } = registerCourseSchema.safeParse(req.body);
     if (!success) {
-      throw new AppError(error.issues[0]?.message || "Dữ liệu không hợp lệ.", 400);
+      throw new AppError(
+        error.issues[0]?.message || "Dữ liệu không hợp lệ.",
+        400,
+      );
     }
 
-    const result = await registerService.register(req.user.id, data.courseSemesterIds);
+    const result = await registerService.register(
+      req.user.id,
+      data.courseSemesterIds,
+    );
 
     res.status(200).json({
       success: true,
@@ -55,13 +68,50 @@ export const getMyRegistrations = async (req, res, next) => {
       throw new AppError("status không hợp lệ.", 400);
     }
 
-    const registrations = await registerService.getMyRegistrations(req.user.id, status);
+    const registrations = await registerService.getMyRegistrations(
+      req.user.id,
+      status,
+    );
 
     res.status(200).json({
       success: true,
       message: "Lấy danh sách đăng ký thành công.",
       data: registrations,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const exportRegistrations = async (req, res, next) => {
+  try {
+    const statusParam = req.query.status;
+    let status;
+    if (!statusParam) {
+      status = "CONFIRMED"; // mặc định: phiếu chỉ liệt kê học phần đang có hiệu lực
+    } else if (statusParam === "ALL") {
+      status = undefined; // không lọc, lấy toàn bộ lịch sử đăng ký
+    } else if (VALID_STATUSES.includes(statusParam)) {
+      status = statusParam;
+    } else {
+      throw new AppError("status không hợp lệ.", 400);
+    }
+
+    const registrations = await registerService.getMyRegistrations(
+      req.user.id,
+      status,
+    );
+    const buffer = await buildRegistrationsDocx(req.user, registrations);
+
+    const safeStudentCode = req.user.studentCode.replace(/[^a-zA-Z0-9_-]/g, "");
+    const fileName = `phieu-dang-ky-hoc-phan-${safeStudentCode}.docx`;
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    );
+    res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
+    res.send(buffer);
   } catch (error) {
     next(error);
   }
