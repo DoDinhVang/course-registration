@@ -5,13 +5,13 @@ async function testAuth() {
 
   try {
     // 1. Test Login
-    console.log("\n1. Đăng nhập với SV001 / 123456...");
+    console.log("\n1. Đăng nhập với sv001@example.com / password123...");
     const loginRes = await fetch(`${baseUrl}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        email: "sv001@gmail.com",
-        password: "123456",
+        email: "sv001@example.com",
+        password: "password123",
       }),
     });
 

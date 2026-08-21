@@ -4,9 +4,8 @@ import semesterRouter from "./semester.router.js";
 import registerRouter from "./register.router.js";
 const mainRouter = express.Router();
 
-// Mount auth router under /api/auth path
 mainRouter.use("/auth", authRouter);
 mainRouter.use("/semesters", semesterRouter);
-mainRouter.use("/register", registerRouter)
+mainRouter.use("/register", registerRouter);
 
 export default mainRouter;
